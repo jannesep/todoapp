@@ -1,10 +1,12 @@
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class TodoItem {
 
     private LocalDate dueDate;
     private String description;
     private boolean isDone;
+    private DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     public TodoItem(LocalDate dueDate, String description, boolean isDone) {
         this.dueDate = dueDate;
@@ -34,5 +36,10 @@ public class TodoItem {
 
     public void setDone(boolean done) {
         isDone = done;
+    }
+
+    @Override
+    public String toString() {
+        return getDueDate().format(dateFormat) + " - " + getDescription();
     }
 }
