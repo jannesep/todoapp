@@ -1,20 +1,18 @@
 import net.miginfocom.swing.MigLayout;
+import org.jdesktop.swingx.JXDatePicker;
 
 import javax.swing.*;
+import java.awt.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 public class TodoApp extends JFrame {
 
-    private JPanel mainPanel;
     private JList<TodoItem> itemList;
     private ItemController controller;
-    private JButton addNewButton;
-    private JButton closeButton;
-    private JButton saveButton;
     private JTextArea descriptionArea;
     private JCheckBox isDoneBox;
-    private JTextField datePicker;
+    private JXDatePicker datePicker;
 
     public static SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
@@ -22,50 +20,51 @@ public class TodoApp extends JFrame {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new MigLayout("fill"));
 
-        mainPanel = new JPanel(new MigLayout("fill"));
+        JPanel mainPanel = new JPanel(new MigLayout("fill"));
+        mainPanel.setPreferredSize(new Dimension(400, 300));
 
         controller = new ItemController();
 
         itemList = new JList<>(controller.getAllItems());
+        itemList.setCellRenderer(new ItemListRenderer());
         itemList.addListSelectionListener(e -> {
             if (itemList.getSelectedIndex() != -1) {
-                datePicker.setText(dateFormat.format(itemList.getSelectedValue().getDueDate()));
+                datePicker.setDate(itemList.getSelectedValue().getDueDate());
                 descriptionArea.setText(itemList.getSelectedValue().getDescription());
                 isDoneBox.setSelected(itemList.getSelectedValue().isDone());
             }
         });
-        addNewButton = new JButton("Uusi tehtävä");
+
+        JButton addNewButton = new JButton("Uusi tehtävä");
         addNewButton.addActionListener(e -> {
             itemList.clearSelection();
-            datePicker.setText(null);
+            datePicker.setDate(null);
             descriptionArea.setText(null);
             isDoneBox.setSelected(false);
         });
 
-        mainPanel.add(itemList, "grow, wrap");
+        mainPanel.add(new JScrollPane(itemList), "grow, wrap");
         mainPanel.add(addNewButton);
 
         JPanel itemDetailsPanel = new JPanel(new MigLayout("fill, wrap 1"));
-        datePicker = new JTextField();
+        itemDetailsPanel.setPreferredSize(new Dimension(300, 300));
+        datePicker = new JXDatePicker();
         descriptionArea = new JTextArea(3, 10);
-        isDoneBox = new JCheckBox();
-        saveButton = new JButton("Tallenna");
+        isDoneBox = new JCheckBox("Tehty");
+
+        JButton saveButton = new JButton("Tallenna");
         saveButton.addActionListener(e -> {
-            try {
-                if (itemList.getSelectedIndex() == -1) {
-                    controller.addNewItem(new TodoItem(dateFormat.parse(datePicker.getText()), descriptionArea.getText(), isDoneBox.isSelected()));
-                    itemList.setListData(controller.getAllItems());
-                } else {
-                    TodoItem oldItem = itemList.getSelectedValue();
-                    oldItem.setDueDate(dateFormat.parse(datePicker.getText()));
-                    oldItem.setDescription(descriptionArea.getText());
-                    oldItem.setDone(isDoneBox.isSelected());
-                    controller.updateItem(oldItem);
-                    itemList.setListData(controller.getAllItems());
-                    itemList.setSelectedValue(oldItem, true);
-                }
-            } catch (ParseException pe) {
-                pe.printStackTrace();
+            if (itemList.getSelectedIndex() == -1) {
+                controller.addNewItem(new TodoItem(datePicker.getDate(), descriptionArea.getText(), isDoneBox.isSelected()));
+                itemList.setListData(controller.getAllItems());
+            } else {
+                TodoItem oldItem = itemList.getSelectedValue();
+                oldItem.setDueDate(datePicker.getDate());
+                oldItem.setDescription(descriptionArea.getText());
+                oldItem.setDone(isDoneBox.isSelected());
+                controller.updateItem(oldItem);
+                itemList.setListData(controller.getAllItems());
+                itemList.setSelectedValue(oldItem, true);
             }
         });
 
@@ -73,11 +72,8 @@ public class TodoApp extends JFrame {
         itemDetailsPanel.add(datePicker, "grow");
         itemDetailsPanel.add(new JLabel("Kuvaus"));
         itemDetailsPanel.add(descriptionArea, "grow");
-        itemDetailsPanel.add(new JLabel("Tehty"));
         itemDetailsPanel.add(isDoneBox);
         itemDetailsPanel.add(saveButton);
-
-
 
         add(mainPanel);
         add(itemDetailsPanel);
